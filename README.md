@@ -1,1 +1,8 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/hLqvXyMi)
+This project was created for UVA's CS 3240 - Software Engineering class.
+
+It was a team-based project, consisting of 5 members:
+1) Emma Ylagan - Scrum Master
+2) Elyse Undan - Requirements Master
+3) Pranav Goteti - Software Engineer
+4) Vikranth Nara - Testing Manager
+5) Bhargav Garre Venkata - DevOps
