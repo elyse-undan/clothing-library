@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Manage Requests{% endblock %}
+{% block content %}
+<div class="container py-4" style="width: 85%;">
+    <h1 class="text-center mb-5">Manage Requests</h1>
+
+     <!-- Borrow requests card -->
+    <div class="card mb-4 shadow-sm">
+
+        <!-- Title -->
+        <div class="card-header text-white fw-semibold" style="background-color: #5fa8d3;">
+            Pending Borrow Item Requests
+        </div>
+
+        <!-- Each request -->
+        <div class="card-body">
+            {% if pending_borrow_requests %}
+                <ul class="list-group list-group-flush">
+                    {% for request in pending_borrow_requests %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ request.item.name }}</strong> requested by <em>{{ request.user.username }}</em> for {{ request.desired_duration }} day{{ request.desired_duration|pluralize }}
+                        </div>
+                        <form method="POST" class="d-flex gap-2 mb-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="request_id" value="{{ request.id }}">
+                            <input type="hidden" name="request_type" value="borrow">
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                            <button type="submit" name="action" value="deny" class="btn btn-danger btn-sm">Deny</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <ul>No pending borrow requests.</ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Private collection access requests -->
+    <div class="card mb-4 shadow-sm">
+
+        <!-- Title -->
+        <div class="card-header text-white fw-semibold" style="background-color: #5fa8d3;">
+                Pending Collection Item Requests
+        </div>
+
+        <!-- Requests -->
+        <div class="card-body">
+            {% if pending_access_requests %}
+                <ul class="list-group list-group-flush">
+                    {% for request in pending_access_requests %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <em>{{ request.user.username }}</em> has requested access to <strong>{{ request.collection.title }}</strong>
+                            </div>
+                            <form method="POST" class="d-flex gap-2 mb-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="request_id" value="{{ request.id }}">
+                                <input type="hidden" name="request_type" value="access">
+                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                                <button type="submit" name="action" value="deny" class="btn btn-danger btn-sm">Deny</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <ul>No pending access requests.</ul>
+            {% endif %}
+        </div>
+    </div>
+
+        
+    <!-- Patron promotion requests -->
+    <div class="card mb-4 shadow-sm">
+
+        <!-- Title -->
+        <div class="card-header text-white fw-semibold" style="background-color: #5fa8d3;">
+            Pending Patron Promotion Requests
+        </div>
+
+
+        <!-- Requests -->
+        <div class="card-body">
+            {% if pending_promotion_requests %}
+                <ul class="list-group list-group-flush">
+                {% for promo_request in pending_promotion_requests %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <em>{{ promo_request.user.username }}</em> has requested to become a librarian
+                        </div>
+                        <form method="POST" class="d-flex gap-2 mb-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="request_id" value="{{ promo_request.id }}">
+                            <input type="hidden" name="request_type" value="promotion">
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                            <button type="submit" name="action" value="deny" class="btn btn-danger btn-sm">Deny</button>
+                        </form>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <ul>No pending promotion requests.</ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}My Borrowed Items{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">My Borrowed Items</h1>
+
+  <!-- Current Rentals Section -->
+  <h3 class="mb-4 text-center">Current Rentals</h3>
+    {% if current_rentals %}
+    <div class="d-flex overflow-auto flex-row gap-3 pb-3">
+        {% for rental in current_rentals %}
+            <div class="card shadow-sm" style="min-width: 300px; max-width: 300px;">
+                {% if rental.item.photos.all %}
+                    <img src="{{ rental.item.photos.first.photo }}" alt="{{ rental.item.name }}" class="card-img-top">
+                {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                        No Image
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ rental.item.name }}</h5>
+                    <p class="card-text">
+                    <!-- Display days left until due -->
+                    Days left: {{ rental.end_date|timeuntil }}
+                    </p>
+                </div>
+                <a href="{% url 'item_detail' rental.item.pk %}" class="stretched-link"></a>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+     <div class="w-100 d-flex justify-content-center align-items-center">
+        <p class="text-muted">No current rentals.</p>
+      </div>
+    {% endif %}
+
+  <!-- Borrow Requests Section -->
+  <h3 class="text-center mt-4 mb-4">Borrow Requests</h3>
+  {% if borrow_requests %}
+    <div class="d-flex overflow-auto flex-row gap-3 pb-3">
+      {% for request in borrow_requests %}
+          <div class="card shadow-sm" style="min-width: 300px; max-width: 300px;">
+              {% if request.item.photos.all %}
+                  <img src="{{ request.item.photos.first.photo }}" alt="{{ request.item.name }}" class="card-img-top">
+              {% else %}
+                  <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                      No Image
+                  </div>
+              {% endif %}
+              <div class="card-body">
+                  <h5 class="card-title">{{ request.item.name }}</h5>
+                  <p class="card-text">Status: {{ request.get_status_display }}</p>
+              </div>
+              <a href="{% url 'item_detail' request.item.pk %}" class="stretched-link"></a>
+          </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted text-center">No borrow requests.</p>
+  {% endif %}
+</div>
+{% endblock %}

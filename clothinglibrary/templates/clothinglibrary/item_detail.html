@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load review_stars %}
+{% block title %}{{ item.name }}{% endblock %}
+
+{% block content %}
+    <style>
+        :root {
+            --light-bg: #bee9e8;
+            --accent-bg: #d5ecfd;
+            --primary: #62b6cb;
+            --primary-dark: #1b4965;
+            --cta-blue: #5fa8d3;
+        }
+
+        .dot {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .dot-available { background-color: green; }
+        .dot-soon { background-color: goldenrod; }
+        .dot-unavailable { background-color: red; }
+        .btn-light {
+            font-weight: 500;
+            border-radius: 30px;
+            padding: 6px 18px;
+        }
+    
+        .btn-light:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-warning {
+        background-color: var(--cta-blue);
+        border-color: var(--cta-blue);
+        color: white;
+        }
+        .btn-warning:hover {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        }
+    
+        .text-danger {
+            color: #dc3545 !important;
+        }
+    
+        .text-danger:hover {
+            color: #bb2d3b !important;
+        }
+    </style>
+    <div class="container-fluid py-5 px-lg-5 mb-0 pb-0" style="max-width: 1600px; margin: auto;">
+        <div class="row gx-5">
+
+            <!-- Item photo -->
+            <div class="col-lg-7 mb-4 d-flex justify-content-center">
+                {% if item.photos.first %}
+                    <div class="bg-light rounded overflow-hidden w-100 shadow-sm" style="max-width: 80%">
+                        <img src="{{ item.photos.first.photo }}" alt="{{ item.name }}"
+                            class="img-fluid w-100 h-100 object-fit-contain" style="object-fit: contain;">
+                    </div>
+                {% else %}
+                    <div class="w-100 bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 500px;">
+                        <p>No photo available</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Two cards for item name/details and borrow request -->
+            <div class="col-lg-5 d-flex flex-column gap-4">
+
+                <!-- Card 1: Item name and details -->
+                <div class="bg-white rounded shadow-sm border-2 p-4">
+                    <h2 class="mb-2 text-center"> {{ item.name }} </h2>
+                    <p class="mb-3 text-center"><em>{{ item.description }}</em></p>
+                    <div class="text-center">
+                        {% with item.availability_info as info %}
+                            {% if info.status == 'available' %}
+                                <p><span class="dot dot-available"></span> Available</p>
+                            {% elif info.status == 'soon' %}
+                                <p>
+                                    <span class="dot dot-soon"></span>
+                                    Available Soon ({{ info.days_left }} day{{ info.days_left|pluralize }})
+                                </p>
+                            {% else %}
+                                <p>
+                                    <span class="dot dot-unavailable"></span>
+                                    Unavailable ({{ info.days_left }} day{{ info.days_left|pluralize }})
+                                </p>
+                            {% endif %}
+                        {% endwith %}
+                        <p class="mb-1 text-center"><strong>Lender:</strong> <a href="{% url 'profile' item.lender.username %}">{{ item.lender.get_full_name|default:item.lender.username }}</a></p>
+                        <p class="mb-1 text-center"><strong>Category:</strong> {{ item.get_category_display }}</p>
+                        <p class="mt-4 text-muted small text-center"> ↓ More product details below </p>
+                        {% if user.is_librarian %}
+                            <div class="pb-3 d-flex justify-content-center mt-4">
+                            <a href="{% url 'edit_item' item.id %}" class="btn btn-light border btn-sm shadow-sm mr-2">Edit</a>
+                            <a href="{% url 'delete_item' item.id %}" class="btn btn-light border text-danger btn-sm shadow-sm ml-2">Delete</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Card 2: Rental request -->
+                <div class="bg-white rounded shadow-sm p-4">
+                    <div class="text-center">
+                        {% if user.is_authenticated %}
+                            <h3 class="mb-3">Borrow This Item</h3>
+                            {% with item.availability_info as info %}
+                                {% if info.status == 'available' %}
+                                    {% if borrow_request and borrow_request.status == 'PENDING' %}
+                                        <button class="btn btn-warning" disabled>Request Pending</button>
+                                        <div class="alert alert-warning mt-3" role="alert">
+                                            Your request is pending. The lender will be notified soon.
+                                        </div>
+                                    {% elif borrow_request and borrow_request.status == 'DENIED' %}
+                                        <form action="{% url 'request_borrow' item.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <label for="desired_duration">Days to borrow:</label>
+                                            <input type="number" name="desired_duration" id="desired_duration" min="1" max="{{ item.max_rental_duration }}" value="{{ item.max_rental_duration }}" class="form-control mb-2">
+                                            <button type="submit" class="btn btn-primary">Request to Borrow</button>
+                                        </form>
+                                        <div class="alert alert-danger mt-3" role="alert">
+                                            Your request was denied. You can contact the lender for more info or try again.
+                                        </div>
+                                    {% else %}
+                                        <form action="{% url 'request_borrow' item.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                <label for="desired_duration" class="me-2 mb-0">Days requesting to borrow:</label>
+                                                <input type="number" name="desired_duration" id="desired_duration"
+                                                       min="1" max="{{ item.max_rental_duration }}"
+                                                       value="{{ item.max_rental_duration }}"
+                                                       class="form-control w-auto" style="width: 100px;">
+                                            </div>
+                                            <p class="mb-4 text-muted"><small><em>Max Rental Duration: {{ item.max_rental_duration }} days</em></small></p>
+                                            <button type="submit" class="btn btn-primary" style="background-color: 1b4965;">Request to Borrow</button>
+                                        </form>
+                                    {% endif %}
+                                {% elif borrow_request and borrow_request.status == 'APPROVED' %}
+                                        <div class="alert alert-success" role="alert">
+                                            Your request was approved! You can view this item in <a href="{% url 'my_borrowed_items' %}" class="alert-link">My Borrowed Items</a>.
+                                        </div>
+                                {% else %}
+                                    <button class="btn btn-secondary" disabled>This item is currently unavailable</button>
+                                {% endif %}
+                            {% endwith %}
+                            {% else %}
+                                <button class="btn btn-secondary" disabled>Sign in to borrow this item</button>
+                            {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accordian for more item details -->
+    <div class="container-fluid py-5 px-3 px-md-4 px-lg-5 accordion pb-0" id="productDetailsAccordion" style="max-width: 1600px; margin: auto;">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingSize">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSize" aria-expanded="true" aria-controls="collapseSize">
+              Size & Condition
+            </button>
+          </h2>
+          <div id="collapseSize" class="accordion-collapse collapse" aria-labelledby="headingSize" data-bs-parent="#productDetailsAccordion">
+            <div class="accordion-body">
+              <p><strong>Size:</strong> {{ item.size }}</p>
+              <p><strong>Measurements:</strong> {{ item.measurements|default:"None provided"|safe }}</p>
+              <p><strong>Condition:</strong> {{ item.get_condition_display }} (worn {{ item.times_worn }} times)</p>
+            </div>
+          </div>
+        </div>
+      
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingMaterial">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMaterial" aria-expanded="false" aria-controls="collapseMaterial">
+              Care Information
+            </button>
+          </h2>
+          <div id="collapseMaterial" class="accordion-collapse collapse" aria-labelledby="headingMaterial" data-bs-parent="#productDetailsAccordion">
+            <div class="accordion-body">
+              <p><strong>Care Instructions:</strong> {{ item.care_instructions|default:"None provided"|safe }}</p>
+              <p><strong>Protection Info:</strong> {{ item.protection_info|default:"None provided"|safe }}</p>
+              <p><strong>Flaws:</strong> {{ item.flaws|default:"None provided"|safe }}</p>
+            </div>
+          </div>
+        </div>
+      
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingRental">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRental" aria-expanded="false" aria-controls="collapseRental">
+              Rental Details
+            </button>
+          </h2>
+          <div id="collapseRental" class="accordion-collapse collapse" aria-labelledby="headingRental" data-bs-parent="#productDetailsAccordion">
+            <div class="accordion-body">
+                <p><strong>Date Added:</strong> <span class="date">{{ item.created_at|date:"Y-m-d H:i:s" }}</span></p>
+                <p><strong>Number of Past Rentals:</strong> {{ item.number_of_past_rentals }}</p>
+                {% if item.last_borrowed_date %}
+                    <p><strong>Last Rented:</strong> {{ item.last_borrowed_date|date:"F j, Y" }}</p>
+                {% else %}
+                    <p><strong>Last Rented:</strong> Never</p>
+                {% endif %}
+                <p><strong>Item Identifer:</strong> {{ item.id }}</p>
+            </div>
+          </div>
+        </div>
+    </div>
+      
+   
+<hr style="margin-top: 80px; margin-bottom: 40px;">
+
+<div class="container-fluid py-5 px-3 px-md-4 px-lg-5 pt-2" style="max-width: 1600px; margin: auto;">
+<h2>Reviews</h2>
+<div class="row">
+    {% for review in item.reviews.all %}
+    <div class="">
+        <div class="card p-3 mb-3">
+            <h6 class="card-title review-title">
+                <span>{{ review.rating|stars }}</span>
+                <a href="{% url 'profile' review.user.username %}" style="text-decoration: none; color: inherit;">
+                    {% if review.user.userprofile.photo %}
+                        <img src="{{ review.user.userprofile.photo.url }}" alt="Profile Photo" class="small-profile-image" />
+                    {% else %}
+                        <i class="bi bi-person-circle"></i>
+                    {% endif %}
+                    {{ review.user.get_full_name|default:review.user.username }}
+                </a>
+            </h6>
+            <p>{{ review.comment }}</p>
+            {% if review.user == user %}
+                <!-- Show delete button only for the review's author -->
+                <form method="POST" action="{% url 'delete_review' review.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="ml-3">No reviews yet.</p>
+        {% endfor %}
+    </div>
+    <h3 class="my-3">Add a Review</h3>
+  {% if user.is_authenticated %}
+      <form id="reviewForm" method="POST" action="{% url 'add_review' item.id %}">
+          {% csrf_token %}
+          <textarea name="comment" rows="4" cols="60" class="form-control" placeholder="Write your review here..."></textarea>
+          <label for="rating">Rating:</label>
+          <div class="star-rating">
+              <input type="radio" id="star5" name="rating" value="5">
+              <label for="star5" title="5 stars">&#9733;</label>
+
+              <input type="radio" id="star4" name="rating" value="4">
+              <label for="star4" title="4 stars">&#9733;</label>
+
+              <input type="radio" id="star3" name="rating" value="3">
+              <label for="star3" title="3 stars">&#9733;</label>
+
+              <input type="radio" id="star2" name="rating" value="2">
+              <label for="star2" title="2 stars">&#9733;</label>
+
+              <input type="radio" id="star1" name="rating" value="1">
+              <label for="star1" title="1 star">&#9733;</label>
+          </div>
+          <br><br>
+          <button type="submit" class="btn btn-primary" style="background-color: 1b4965;">Submit</button>
+      </form>
+  {% else %}
+      <p>You must log in to add a review.</p>
+  {% endif %}
+</div>
+{% endblock %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('reviewFormContainer');
+      const form = document.getElementById('reviewForm');
+    
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+    
+        // send form via AJAX
+        const resp = await fetch(form.action, {
+          method: form.method,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: new FormData(form)
+        });
+    
+        // get the returned HTML (your view should render the form snippet with errors)
+        const html = await resp.text();
+    
+        // replace the old form with the new HTML
+        container.innerHTML = html;
+      });
+    });
+</script>

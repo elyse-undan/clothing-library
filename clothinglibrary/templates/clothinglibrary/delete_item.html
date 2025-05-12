@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Delete Collection{% endblock %}
+
+{% block content %}
+<h1>Delete Item</h1>
+<p>Are you sure you want to delete the item "{{ item.name }}"?</p>
+{% comment %} # Resource: ChatGPT 4o
+# Prompt: How can I make a delete view template in Django?
+# Date: March 30, 2025 10:11 PM {% endcomment %}
+<form method="post">{% csrf_token %}
+    <input type="submit" value="Confirm Delete" class="btn btn-danger">
+    <a href="{% url 'catalog' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

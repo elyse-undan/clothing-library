@@ -1,0 +1,38 @@
+/*Note: generally good practice when uploading static image files to the s3, make sure to cache-control it*/
+
+/* Star rating input */
+.star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    font-size: 2rem;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    color: #bbb;
+    cursor: pointer;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: gold;
+}
+
+.star-rating input[type="radio"]:checked ~ label {
+    color: gold;
+}
+
+.small-profile-image {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.review-title {
+    display: flex;
+    justify-content: space-between;
+}

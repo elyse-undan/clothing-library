@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block uname %} {{ uname }} {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4 text-center">{{ user.get_full_name|default:user.username }}'s Profile</h1>
+  <div class="row align-items-stretch mb-4">
+    
+    <!-- Profile Picture Column -->
+    <div class="col-md-4">
+      <div class="border rounded shadow h-100 d-flex align-items-center justify-content-center" style="min-height: 250px;">
+        {% if user.userprofile.photo %}
+          <img src="{{ user.userprofile.photo.url }}" alt="Profile Photo"
+               class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: cover;">
+        {% else %}
+          <div class="text-center text-muted">No photo available</div>
+        {% endif %}
+      </div>
+      <!-- Hidden file input form for updating profile picture -->
+      <form id="update-picture-form" method="post" action="{% url 'update_profile_picture' %}" enctype="multipart/form-data" style="display: none;">
+        {% csrf_token %}
+        <input type="file" id="profile-picture-input" name="photo" accept="image/jpeg, image/png" onchange="document.getElementById('update-picture-form').submit();">
+      </form>
+      <!-- Button for adding/changing profile picture -->
+      {% if is_current_user %}
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary" id="trigger-profile-picture-input">
+          {% if user.userprofile.photo %}
+            Change Profile Picture
+          {% else %}
+            Add Profile Picture
+          {% endif %}
+        </button>
+        {% if user.userprofile.photo %}
+          <a href="{% url 'remove_profile_picture' %}" class="btn btn-danger ms-2" title="Remove Profile Picture">
+            <i class="bi bi-x"></i>
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    
+    <!-- Profile Information Column -->
+    <div class="col-md-8">
+      <div class="border rounded p-3 h-100">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p>
+          <strong>Description:</strong>
+          <span id="description-display">
+            {% if user.userprofile.description %}
+              {{ user.userprofile.description }}
+            {% else %}
+              <em>No description provided.</em>
+            {% endif %}
+          </span>
+          {% if is_current_user %}
+          <a href="#" id="edit-description-btn" class="ms-2 text-decoration-none" title="Edit Description">
+            <i class="bi bi-pencil"></i>
+          </a>
+          {% endif %}
+        </p>
+        <!-- Inline Description Edit Form -->
+        <div id="description-edit-form" style="display: none;">
+          <form method="post" action="{% url 'update_description' %}">
+            {% csrf_token %}
+            <div class="mb-2">
+              <textarea name="description" class="form-control" rows="3">{{ user.userprofile.description }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" id="cancel-description-edit" class="btn btn-secondary btn-sm">Cancel</button>
+          </form>
+        </div>
+        <p><strong>Date Joined:</strong> <span class="date"> {{ user.date_joined|date:'Y-m-d H:i:s' }}</span></p></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Toggle description edit form
+  document.getElementById("edit-description-btn").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("description-display").style.display = "none";
+    document.getElementById("description-edit-form").style.display = "block";
+  });
+  document.getElementById("cancel-description-edit").addEventListener("click", function(){
+    document.getElementById("description-edit-form").style.display = "none";
+    document.getElementById("description-display").style.display = "inline";
+  });
+  
+  // Directly trigger file selection when profile picture button is clicked
+  document.getElementById("trigger-profile-picture-input").addEventListener("click", function(){
+    document.getElementById("profile-picture-input").click();
+  });
+</script>
+{% endblock %}

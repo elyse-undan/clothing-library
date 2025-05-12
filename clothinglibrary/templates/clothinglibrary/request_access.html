@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Request Access to Collection{% endblock %}
+
+{% block content %}
+  <h2>{{ collection.title }}</h2>
+  <p>{{ collection.description }}</p>
+
+  {% if not collection.is_public %}
+    <div class="alert alert-warning">
+      This collection is private. If you would like to access it, please request access.
+    </div>
+
+    {% if not existing_request %}
+        <form method="post" action="{% url 'request_access' collection.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Request Access</button>
+        </form>
+    {% elif existing_request.status == 'PENDING' %}
+        <p>Your request for access to '{{ collection.title }}' is still pending.</p>
+    {% elif existing_request.status == 'APPROVED' %}
+        <p>Your request for access to '{{ collection.title }}' has been approved.</p>
+        <a href="{% url 'collection_detail' collection.id %}" class="btn btn-success">Go to Collection Details</a>
+    {% elif existing_request.status == 'DENIED' %}
+        <p>Your request for access to '{{ collection.title }}' was denied. Please contact a librarian if you have any questions.</p>
+        <form method="post" action="{% url 'request_access' collection.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Request Access Again</button>
+        </form>
+    {% endif %}
+
+  {% else %}
+    <p>This collection is public and accessible to all patrons.</p>
+  {% endif %}
+
+{% endblock %}
